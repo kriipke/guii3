@@ -64,10 +64,10 @@ jobs:
         cd ../man/man1
         ln -sf guii.1 iiwm.1
         ln -sf guii.1 iist.1
-        cd ../..
+        cd ..
         pwd
         find .
-        tar -czf guii3-${{ matrix.os }}.tar.gz .
+        tar -czf guii3-${{ matrix.os }}.tar.gz release
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
