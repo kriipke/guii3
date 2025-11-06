@@ -13,7 +13,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
         include:
           - os: ubuntu-latest
             deps: |
@@ -27,15 +27,6 @@ jobs:
                 libfontconfig1-dev \
                 libfreetype6-dev \
                 libharfbuzz-dev \
-                pkg-config
-          - os: macos-latest
-            deps: |
-              brew install \
-                freetype \
-                fontconfig \
-                harfbuzz \
-                libx11 \
-                libxft \
                 pkg-config
 
     steps:
