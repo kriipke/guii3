@@ -1,0 +1,97 @@
+.TH GUII 1 guii3\-VERSION
+.SH NAME
+guii \- unified launcher for iiwm and iist
+.SH SYNOPSIS
+.B guii
+.RB [ \-v ]
+.P
+.B iiwm
+.RB [ \-v ]
+.P
+.B iist
+.RB [ \-a ]
+.RB [ \-A
+.IR alpha ]
+.RB [ \-c
+.IR class ]
+.RB [ \-f
+.IR font ]
+.RB [ \-g
+.IR geometry ]
+.RB [ \-n
+.IR name ]
+.RB [ \-o
+.IR iofile ]
+.RB [ \-T
+.IR title ]
+.RB [ \-t
+.IR title ]
+.RB [ \-w
+.IR windowid ]
+.RB [[ \-e ]
+.IR command
+.RI [ arguments ...]]
+.P
+.B iist
+.RB [ \-a ]
+.RB [ \-A
+.IR alpha ]
+.RB [ \-c
+.IR class ]
+.RB [ \-f
+.IR font ]
+.RB [ \-g
+.IR geometry ]
+.RB [ \-n
+.IR name ]
+.RB [ \-o
+.IR iofile ]
+.RB [ \-T
+.IR title ]
+.RB [ \-t
+.IR title ]
+.RB [ \-l
+.IR line ]
+.RB [ \-w
+.IR windowid ]
+.RB [ \-v ]
+.SH DESCRIPTION
+.B guii
+is a unified binary that contains both a dynamic window manager (iiwm) and 
+a simple terminal emulator (iist). The specific application launched depends 
+on the name used to invoke the binary.
+.P
+When invoked as
+.B iiwm
+(typically through a symlink), it launches the dynamic window manager.
+.P
+When invoked as
+.B iist
+(typically through a symlink), it launches the simple terminal emulator.
+.P
+When invoked as
+.B guii
+directly, it displays usage information.
+.SH OPTIONS
+.TP
+.B \-v
+prints version information to stderr, then exits.
+.SH SETUP
+To use guii, create symlinks for each application:
+.P
+.nf
+.RS
+ln -s guii iiwm
+ln -s guii iist
+.RE
+.fi
+.P
+Then execute ./iiwm or ./iist as needed.
+.SH SEE ALSO
+.BR dwm (1),
+.BR st (1)
+.SH AUTHORS
+guii3 unified launcher integration.
+Based on dwm by Anselm R Garbe and st by Aurélien APTEL.
+.SH LICENSE
+See the LICENSE file for the terms of redistribution.

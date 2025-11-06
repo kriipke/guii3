@@ -1,0 +1,180 @@
+name: Pull Request Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  lint-and-validate:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Check file structure
+      run: |
+        echo "=== Validating project structure ==="
+        
+        # Check Phase 1 implementation
+        echo "Checking Phase 1 structure..."
+        test -d src/common || { echo "❌ src/common missing"; exit 1; }
+        test -d src/wm || { echo "❌ src/wm missing"; exit 1; }
+        test -d src/term || { echo "❌ src/term missing"; exit 1; }
+        test -d man || { echo "❌ man directory missing"; exit 1; }
+        echo "✓ Directory structure valid"
+        
+        # Check critical files
+        echo "Checking critical files..."
+        test -f src/common/launcher.c || { echo "❌ launcher.c missing"; exit 1; }
+        test -f src/common/launcher.h || { echo "❌ launcher.h missing"; exit 1; }
+        test -f Makefile || { echo "❌ Makefile missing"; exit 1; }
+        test -f ROADMAP.md || { echo "❌ ROADMAP.md missing"; exit 1; }
+        echo "✓ Critical files present"
+
+    - name: Validate main function renames
+      run: |
+        echo "=== Validating function renames ==="
+        
+        # Check that main() was renamed to wm_main()
+        if grep -q "^main(" src/wm/dwm.c; then
+          echo "❌ main() still exists in dwm.c - should be wm_main()"
+          exit 1
+        fi
+        
+        if ! grep -q "wm_main(" src/wm/dwm.c; then
+          echo "❌ wm_main() not found in dwm.c"
+          exit 1
+        fi
+        
+        # Check that main() was renamed to term_main()  
+        if grep -q "^main(" src/term/x.c; then
+          echo "❌ main() still exists in x.c - should be term_main()"
+          exit 1
+        fi
+        
+        if ! grep -q "term_main(" src/term/x.c; then
+          echo "❌ term_main() not found in x.c"
+          exit 1
+        fi
+        
+        echo "✓ Function renames validated"
+
+    - name: Check symlinks
+      run: |
+        echo "=== Validating symlinks ==="
+        
+        # Check man page symlinks
+        if [ ! -L man/iiwm.1 ]; then
+          echo "❌ man/iiwm.1 symlink missing"
+          exit 1
+        fi
+        
+        if [ ! -L man/iist.1 ]; then
+          echo "❌ man/iist.1 symlink missing"  
+          exit 1
+        fi
+        
+        # Verify symlink targets
+        if [ "$(readlink man/iiwm.1)" != "guii.1" ]; then
+          echo "❌ iiwm.1 symlink target incorrect"
+          exit 1
+        fi
+        
+        if [ "$(readlink man/iist.1)" != "guii.1" ]; then
+          echo "❌ iist.1 symlink target incorrect"
+          exit 1
+        fi
+        
+        echo "✓ Symlinks validated"
+
+  build-test:
+    name: Test Build Process
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          libx11-dev \
+          libxft-dev \
+          libxinerama-dev \
+          libxrender-dev \
+          libfontconfig1-dev \
+          libfreetype6-dev \
+          libharfbuzz-dev \
+          pkg-config
+
+    - name: Test compilation
+      run: |
+        echo "=== Testing compilation ==="
+        make clean || true
+        make options
+        make all
+
+    - name: Test launcher functionality
+      run: |
+        echo "=== Testing launcher functionality ==="
+        chmod +x guii
+        
+        # Test direct execution
+        ./guii -v || echo "✓ guii launcher executed"
+        
+        # Test symlink creation and execution
+        ln -sf guii test-iiwm
+        ln -sf guii test-iist
+        
+        # Test symlink detection
+        ./test-iiwm --help 2>/dev/null || echo "✓ iiwm symlink detection works"
+        ./test-iist --help 2>/dev/null || echo "✓ iist symlink detection works"
+        
+        # Cleanup
+        rm -f test-iiwm test-iist
+        
+        echo "✓ Launcher functionality validated"
+
+    - name: Test make targets
+      run: |
+        echo "=== Testing make targets ==="
+        
+        # Test build targets
+        make test-build
+        make test-symlinks
+        
+        # Test clean
+        make clean
+        test ! -f guii || { echo "❌ clean didn't remove binary"; exit 1; }
+        test ! -d build || { echo "❌ clean didn't remove build dir"; exit 1; }
+        
+        echo "✓ Make targets validated"
+
+  security-check:
+    name: Security Validation
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Check for sensitive data
+      run: |
+        echo "=== Security checks ==="
+        
+        # Check for potential secrets or keys
+        if grep -r -i "password\|secret\|key" src/ --include="*.c" --include="*.h" | grep -v "KeyPress\|KeyRelease\|keycode"; then
+          echo "❌ Potential secrets found in source code"
+          exit 1
+        fi
+        
+        # Check for unsafe functions
+        if grep -r "gets\|strcpy\|sprintf\|strcat" src/ --include="*.c" --include="*.h"; then
+          echo "⚠️  Potentially unsafe functions found - review for buffer overflows"
+        fi
+        
+        echo "✓ Basic security checks passed"

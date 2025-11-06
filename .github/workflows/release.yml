@@ -1,0 +1,129 @@
+name: Release guii3
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag'
+        required: true
+        default: 'v1.0.0'
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref_name || github.event.inputs.tag }}
+        release_name: guii3 ${{ github.ref_name || github.event.inputs.tag }}
+        body: |
+          ## guii3 Unified Binary Release
+          
+          This release contains the unified binary that provides both:
+          - **iiwm**: Dynamic window manager (dwm fork)  
+          - **iist**: Simple terminal emulator (st fork)
+          
+          ### Installation
+          1. Download the appropriate binary for your platform
+          2. Extract: `tar -xzf guii3-*.tar.gz`
+          3. Install: `sudo cp bin/* /usr/local/bin/`
+          4. The symlinks `iiwm` and `iist` are automatically created
+          
+          ### Usage
+          - Launch window manager: `iiwm`
+          - Launch terminal: `iist`
+          - Show help: `guii -v`
+          
+          See the [ROADMAP.md](ROADMAP.md) for implementation details.
+        draft: false
+        prerelease: false
+
+  build-release:
+    name: Build Release for ${{ matrix.os }}
+    needs: release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: linux-amd64
+            deps: |
+              sudo apt-get update
+              sudo apt-get install -y \
+                build-essential \
+                libx11-dev \
+                libxft-dev \
+                libxinerama-dev \
+                libxrender-dev \
+                libfontconfig1-dev \
+                libfreetype6-dev \
+                libharfbuzz-dev \
+                pkg-config
+          - os: macos-latest
+            name: darwin-arm64
+            deps: |
+              brew install \
+                freetype \
+                fontconfig \
+                harfbuzz \
+                libx11 \
+                libxft \
+                pkg-config
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: ${{ matrix.deps }}
+
+    - name: Build release binary
+      run: |
+        make clean || true
+        make all
+
+    - name: Create release package
+      run: |
+        mkdir -p guii3-${{ matrix.name }}
+        mkdir -p guii3-${{ matrix.name }}/bin
+        mkdir -p guii3-${{ matrix.name }}/man/man1
+        
+        # Copy binary and create symlinks
+        cp guii guii3-${{ matrix.name }}/bin/
+        cd guii3-${{ matrix.name }}/bin
+        ln -sf guii iiwm
+        ln -sf guii iist
+        cd ../..
+        
+        # Copy man pages and create symlinks
+        cp man/guii.1 guii3-${{ matrix.name }}/man/man1/
+        cd guii3-${{ matrix.name }}/man/man1
+        ln -sf guii.1 iiwm.1
+        ln -sf guii.1 iist.1
+        cd ../../..
+        
+        # Copy documentation
+        cp README.adoc ROADMAP.md guii3-${{ matrix.name }}/
+        
+        # Create tarball
+        tar -czf guii3-${{ matrix.name }}.tar.gz guii3-${{ matrix.name }}
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.release.outputs.upload_url }}
+        asset_path: ./guii3-${{ matrix.name }}.tar.gz
+        asset_name: guii3-${{ matrix.name }}.tar.gz
+        asset_content_type: application/gzip
