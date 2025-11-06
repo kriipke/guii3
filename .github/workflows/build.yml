@@ -64,6 +64,8 @@ jobs:
         ln -sf guii.1 iiwm.1
         ln -sf guii.1 iist.1
         cd ../..
+        echo $CWD
+        find .
         tar -czf guii3-${{ matrix.os }}.tar.gz -C release .
 
     - name: Upload build artifacts
