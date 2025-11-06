@@ -9,13 +9,13 @@ on:
 
 jobs:
   build:
-    name: Build on ${{ matrix.os }}
+    name: Build on ${{ matrix.os }} (${{ matrix.arch }})
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
         include:
           - os: ubuntu-latest
+            arch: x86_64
             deps: |
               sudo apt remove man-db
               sudo apt-get update
@@ -29,6 +29,23 @@ jobs:
                 libfreetype6-dev \
                 libharfbuzz-dev \
                 pkg-config
+          - os: ubuntu-latest
+            arch: arm64
+            deps: |
+              sudo apt remove man-db
+              sudo apt-get update
+              sudo apt-get install -y \
+                build-essential \
+                gcc-aarch64-linux-gnu \
+                libx11-dev:arm64 \
+                libxft-dev:arm64 \
+                libxinerama-dev:arm64 \
+                libxrender-dev:arm64 \
+                libfontconfig1-dev:arm64 \
+                libfreetype6-dev:arm64 \
+                libharfbuzz-dev:arm64 \
+                pkg-config \
+                pkg-config-aarch64-linux-gnu
 
     steps:
     - name: Checkout code
@@ -41,14 +58,22 @@ jobs:
       run: |
         make clean || true
         make options
-        make all
+        if [ "${{ matrix.arch }}" = "arm64" ]; then
+          export CC=aarch64-linux-gnu-gcc
+          export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig
+          make all
+        else
+          make all
+        fi
 
     - name: Test binary functionality
+      if: matrix.arch == 'x86_64'
       run: |
         ./guii -v || echo "Launcher version check completed"
         make test-build
 
     - name: Test symlink functionality
+      if: matrix.arch == 'x86_64'
       run: |
         make test-symlinks
 
@@ -67,14 +92,14 @@ jobs:
         cd ../..
         pwd
         find .
-        tar -czf ../guii3-${{ matrix.os }}.tar.gz .
+        tar -czf ../guii3-${{ matrix.os }}-${{ matrix.arch }}.tar.gz .
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: guii3-${{ matrix.os }}
+        name: guii3-${{ matrix.os }}-${{ matrix.arch }}
         path: |
-          guii3-${{ matrix.os }}.tar.gz
+          guii3-${{ matrix.os }}-${{ matrix.arch }}.tar.gz
           guii
         retention-days: 30
 
@@ -89,11 +114,11 @@ jobs:
     - name: Download build artifacts
       uses: actions/download-artifact@v4
       with:
-        name: guii3-ubuntu-latest
+        name: guii3-ubuntu-latest-x86_64
 
     - name: Extract and test package
       run: |
-        tar -xzf guii3-ubuntu-latest.tar.gz
+        tar -xzf guii3-ubuntu-latest-x86_64.tar.gz
         chmod +x bin/guii bin/iiwm bin/iist
         echo "Testing guii launcher..."
         ./bin/guii -v || echo "Launcher test completed"
