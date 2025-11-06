@@ -1,0 +1,73 @@
+#!/bin/sh -e
+
+# configure x11 keyboard settings
+
+unassign_key() {
+	key="$1"
+	assigned_mod="$2"
+
+	case $# in
+		1) 
+			assigned_mod="$(
+                xmodmap | grep "$key" | awk '{ print tolower($1) }'
+            )"
+			;;
+		2)	
+			re="$( printf '^%s[[:space:]]+.*%s' "$key" "$2" )"
+            assigned_mod="$(
+                xmodmap | grep -E "$re" | tr "[A-Z]" "[a-z]"
+            )"
+            ;;
+    esac
+
+	if [ -n "$assigned_mod" ]; then
+		xmodmap -e "remove $assigned_mod = $key"
+	fi
+
+    unset key assigned_mod
+}
+
+map_capslock() {
+	key_name=${1:-Mod3}
+	spare_mod=${2:-Super_L}
+    	
+    keyboard_model='standard'
+    case "$keyboard_model" in
+        [cC]720)
+            caps_lock_keycode=133 ;;
+        standard|'')
+            caps_lock_keycode=66 ;;
+        *)
+            echo "Unsupported keyboard layout: $1, exiting."
+            return 1
+            ;;
+    esac
+
+	unassign_key "Caps_Lock"
+	unassign_key "$spare_mod"
+
+	xmodmap -e "keycode $caps_lock_keycode = $spare_mod"
+	xmodmap -e "add $key_name = $spare_mod"
+
+	xmodmap -e "keycode any = Escape"
+	xcape -e "$spare_mod=Escape"
+
+    unset key_name spare_mod
+}
+
+map_space() {
+	local mod_group=${1:-Control}
+	local spare_mod=${2:-Super_R}
+	
+	xmodmap -e "keycode 65 = $spare_mod"
+	unassign_key "$spare_mod"
+	xmodmap -e "add ${mod_group} = $spare_mod"
+
+	xmodmap -e "keycode any = space"
+	xcape -e "$spare_mod=space"
+
+    unset mod_group spare_mod
+}
+
+map_capslock 'Mod3' 'Super_L'
+map_space 'Control' 'Super_R'

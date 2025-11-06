@@ -1,0 +1,17 @@
+= `guii` - a lightweight window manager / terminal portable binary
+
+`guii` provides the simplicity of a Linux vt with the power of a window manager without overdoing the complexity.
+The result is a featureful terminal that is capable of copy/paste as well as displaying images, etc.
+
+`guii` relies minimally on mouse but 
+allows you to use the mouse to change the terminal selected as well as resize terminals.
+
+== Running guii
+
+Add the following line to your .xinitrc to start dwm using startx:
+
+	hsetroot -solid '#151515' &
+	compton &
+	keymapper &
+	st &
+	exec dwm
