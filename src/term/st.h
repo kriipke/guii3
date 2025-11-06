@@ -92,7 +92,7 @@ typedef struct {
 	const Arg arg;
 } MouseKey;
 
-void die(const char *, ...);
+void term_die(const char *, ...);
 void redraw(void);
 void draw(void);
 

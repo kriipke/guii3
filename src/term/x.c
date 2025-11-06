@@ -812,9 +812,9 @@ xloadcols(void)
 	for (i = 0; i < dc.collen; i++)
 		if (!xloadcolor(i, NULL, &dc.col[i])) {
 			if (colorname[i])
-				die("could not allocate color '%s'\n", colorname[i]);
+				term_die("could not allocate color '%s'\n", colorname[i]);
 			else
-				die("could not allocate color %d\n", i);
+				term_die("could not allocate color %d\n", i);
 		}
 
 	/* set alpha value of bg color */
@@ -1005,7 +1005,7 @@ xloadfonts(char *fontstr, double fontsize)
 		pattern = FcNameParse((FcChar8 *)fontstr);
 
 	if (!pattern)
-		die("can't open font %s\n", fontstr);
+		term_die("can't open font %s\n", fontstr);
 
 	if (fontsize > 1) {
 		FcPatternDel(pattern, FC_PIXEL_SIZE);
@@ -1031,7 +1031,7 @@ xloadfonts(char *fontstr, double fontsize)
 	}
 
 	if (xloadfont(&dc.font, pattern))
-		die("can't open font %s\n", fontstr);
+		term_die("can't open font %s\n", fontstr);
 
 	if (usedfontsize < 0) {
 		FcPatternGetDouble(dc.font.match->pattern,
@@ -1049,17 +1049,17 @@ xloadfonts(char *fontstr, double fontsize)
 	FcPatternDel(pattern, FC_SLANT);
 	FcPatternAddInteger(pattern, FC_SLANT, FC_SLANT_ITALIC);
 	if (xloadfont(&dc.ifont, pattern))
-		die("can't open font %s\n", fontstr);
+		term_die("can't open font %s\n", fontstr);
 
 	FcPatternDel(pattern, FC_WEIGHT);
 	FcPatternAddInteger(pattern, FC_WEIGHT, FC_WEIGHT_BOLD);
 	if (xloadfont(&dc.ibfont, pattern))
-		die("can't open font %s\n", fontstr);
+		term_die("can't open font %s\n", fontstr);
 
 	FcPatternDel(pattern, FC_SLANT);
 	FcPatternAddInteger(pattern, FC_SLANT, FC_SLANT_ROMAN);
 	if (xloadfont(&dc.bfont, pattern))
-		die("can't open font %s\n", fontstr);
+		term_die("can't open font %s\n", fontstr);
 
 	FcPatternDestroy(pattern);
 }
@@ -1097,7 +1097,7 @@ xloadsparefonts(void)
 	char **fp;
 
 	if (frclen != 0)
-		die("can't embed spare fonts. cache isn't empty");
+		term_die("can't embed spare fonts. cache isn't empty");
 
 	/* Calculate count of spare fonts */
 	fc = sizeof(font2) / sizeof(*font2);
@@ -1118,7 +1118,7 @@ xloadsparefonts(void)
 			pattern = FcNameParse((FcChar8 *)*fp);
 
 		if (!pattern)
-			die("can't open spare font %s\n", *fp);
+			term_die("can't open spare font %s\n", *fp);
 
 		if (defaultfontsize > 0) {
 			sizeshift = usedfontsize - defaultfontsize;
@@ -1138,22 +1138,22 @@ xloadsparefonts(void)
 		XftDefaultSubstitute(xw.dpy, xw.scr, pattern);
 
 		if (xloadsparefont(pattern, FRC_NORMAL))
-			die("can't open spare font %s\n", *fp);
+			term_die("can't open spare font %s\n", *fp);
 
 		FcPatternDel(pattern, FC_SLANT);
 		FcPatternAddInteger(pattern, FC_SLANT, FC_SLANT_ITALIC);
 		if (xloadsparefont(pattern, FRC_ITALIC))
-			die("can't open spare font %s\n", *fp);
+			term_die("can't open spare font %s\n", *fp);
 
 		FcPatternDel(pattern, FC_WEIGHT);
 		FcPatternAddInteger(pattern, FC_WEIGHT, FC_WEIGHT_BOLD);
 		if (xloadsparefont(pattern, FRC_ITALICBOLD))
-			die("can't open spare font %s\n", *fp);
+			term_die("can't open spare font %s\n", *fp);
 
 		FcPatternDel(pattern, FC_SLANT);
 		FcPatternAddInteger(pattern, FC_SLANT, FC_SLANT_ROMAN);
 		if (xloadsparefont(pattern, FRC_BOLD))
-			die("can't open spare font %s\n", *fp);
+			term_die("can't open spare font %s\n", *fp);
 
 		FcPatternDestroy(pattern);
 	}
@@ -1194,15 +1194,15 @@ ximopen(Display *dpy)
 		if ((xw.xim = XOpenIM(xw.dpy, NULL, NULL, NULL)) == NULL) {
 			XSetLocaleModifiers("@im=");
 			if ((xw.xim = XOpenIM(xw.dpy, NULL, NULL, NULL)) == NULL)
-				die("XOpenIM failed. Could not open input device.\n");
+				term_die("XOpenIM failed. Could not open input device.\n");
 		}
 	}
 	if (XSetIMValues(xw.xim, XNDestroyCallback, &destroy, NULL) != NULL)
-		die("XSetIMValues failed. Could not set input method value.\n");
+		term_die("XSetIMValues failed. Could not set input method value.\n");
 	xw.xic = XCreateIC(xw.xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
 				XNClientWindow, xw.win, XNFocusWindow, xw.win, NULL);
 	if (xw.xic == NULL)
-		die("XCreateIC failed. Could not obtain input method.\n");
+		term_die("XCreateIC failed. Could not obtain input method.\n");
 }
 
 void
@@ -1248,7 +1248,7 @@ xinit(int cols, int rows)
 
 	/* font */
 	if (!FcInit())
-		die("could not init fontconfig.\n");
+		term_die("could not init fontconfig.\n");
 
 	usedfont = (opt_font == NULL)? font : opt_font;
 	xloadfonts(usedfont, 0);
@@ -1458,7 +1458,7 @@ xmakeglyphfontspecs(XftGlyphFontSpec *specs, const Glyph *glyphs, int len, int x
 			frc[frclen].font = XftFontOpenPattern(xw.dpy,
 					fontpattern);
 			if (!frc[frclen].font)
-				die("XftFontOpenPattern failed seeking fallback font: %s\n",
+				term_die("XftFontOpenPattern failed seeking fallback font: %s\n",
 					strerror(errno));
 			frc[frclen].flags = frcflags;
 			frc[frclen].unicodep = rune;
@@ -2056,7 +2056,7 @@ run(void)
 		if (pselect(MAX(xfd, ttyfd)+1, &rfd, NULL, NULL, tv, NULL) < 0) {
 			if (errno == EINTR)
 				continue;
-			die("select failed: %s\n", strerror(errno));
+			term_die("select failed: %s\n", strerror(errno));
 		}
 		clock_gettime(CLOCK_MONOTONIC, &now);
 
@@ -2171,7 +2171,7 @@ config_init(void)
 void
 usage(void)
 {
-	die("usage: %s [-aiv] [-c class] [-f font] [-g geometry]"
+	term_die("usage: %s [-aiv] [-c class] [-f font] [-g geometry]"
 	    " [-n name] [-o file]\n"
 	    "          [-T title] [-t title] [-w windowid]"
 	    " [[-e] command [args ...]]\n"
@@ -2229,7 +2229,7 @@ term_main(int argc, char *argv[])
 		opt_embed = EARGF(usage());
 		break;
 	case 'v':
-		die("%s " VERSION "\n", argv0);
+		term_die("%s " VERSION "\n", argv0);
 		break;
 	default:
 		usage();
@@ -2246,7 +2246,7 @@ run:
 	XSetLocaleModifiers("");
 
 	if(!(xw.dpy = XOpenDisplay(NULL)))
-		die("Can't open display\n");
+		term_die("Can't open display\n");
 
 	config_init();
 	cols = MAX(cols, 1);

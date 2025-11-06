@@ -12,12 +12,12 @@ ecalloc(size_t nmemb, size_t size)
 	void *p;
 
 	if (!(p = calloc(nmemb, size)))
-		die("calloc:");
+		wm_die("calloc:");
 	return p;
 }
 
 void
-die(const char *fmt, ...) {
+wm_die(const char *fmt, ...) {
 	va_list ap;
 
 	va_start(ap, fmt);

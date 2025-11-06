@@ -46,7 +46,7 @@ hbfindfont(XftFont *match)
 	FT_Face face = XftLockFace(match);
 	hb_font_t *font = hb_ft_font_create(face, NULL);
 	if (font == NULL)
-		die("Failed to load Harfbuzz font.");
+		term_die("Failed to load Harfbuzz font.");
 
 	hbfontcache[hbfontslen].match = match;
 	hbfontcache[hbfontslen].font = font;
