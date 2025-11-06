@@ -117,6 +117,8 @@ jobs:
         cp README.adoc ROADMAP.md guii3-${{ matrix.name }}/
         
         # Create tarball
+        sudo apt-get update
+        sudo apt-get install tar
         tar -czf guii3-${{ matrix.name }}.tar.gz guii3-${{ matrix.name }}
 
     - name: Upload Release Asset
