@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(/Users/spencersmolen/Documents/GitHub/guii3/src/wm/**)",
+      "Read(/Users/spencersmolen/Documents/GitHub/guii3/**)",
+      "Read(/Users/spencersmolen/Documents/GitHub/guii3/src/term/**)",
+      "Bash(make:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
