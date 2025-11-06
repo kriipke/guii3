@@ -51,6 +51,10 @@ $(BUILDDIR):
 $(BUILDDIR)/%.o: $(SRCDIR)/%.c | $(BUILDDIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# Config file generation
+$(SRCDIR)/wm/config.h:
+	cp $(SRCDIR)/wm/config.def.h $@
+
 # Dependencies for specific components
 $(BUILDDIR)/wm/dwm.o: $(SRCDIR)/wm/config.h
 $(BUILDDIR)/term/st.o: $(SRCDIR)/term/config.h $(SRCDIR)/term/st.h $(SRCDIR)/term/win.h
@@ -87,6 +91,7 @@ container-test: container-build
 # Clean targets
 clean:
 	rm -rf $(BUILDDIR) guii test-iiwm test-iist
+	rm -f $(SRCDIR)/wm/config.h
 
 # Install targets
 install: guii
