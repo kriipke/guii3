@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <X11/Xft/Xft.h>
-#include <hb.h>
-#include <hb-ft.h>
+#include <harfbuzz/hb.h>
+#include <harfbuzz/hb-ft.h>
 
 #include "st.h"
 
